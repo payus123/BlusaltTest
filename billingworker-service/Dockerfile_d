@@ -1,0 +1,6 @@
+FROM openjdk:11
+ARG JAR_FILE=build/libs/billingworker-service-0.0.1-SNAPSHOT.jar
+COPY ${JAR_FILE} app.jar
+EXPOSE 8004 8007
+ADD entrypoint.sh entrypoint.sh
+ENTRYPOINT ["sh","/entrypoint.sh"]

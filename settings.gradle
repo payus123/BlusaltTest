@@ -1,0 +1,8 @@
+rootProject.name = 'test-services'
+include 'customerService'
+include 'serviceDiscovery'
+include 'billingService'
+include 'api-gateway'
+include 'billingworker-service'
+
+

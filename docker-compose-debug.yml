@@ -1,0 +1,154 @@
+version: '3'
+
+services:
+
+  demodb:
+    image: 'postgres:latest'
+    container_name: demodb
+    environment:
+      - POSTGRES_USER=root
+      - POSTGRES_PASSWORD=root
+      - POSTGRES_DB=demo
+    ports:
+      - "5432:5432"
+
+
+  demodb2:
+    image: 'postgres:latest'
+    container_name: demodb2
+    environment:
+      - POSTGRES_USER=root
+      - POSTGRES_PASSWORD=root
+      - POSTGRES_DB=demo
+    ports:
+      - "5433:5432"
+
+  demodb3:
+    image: 'postgres:latest'
+    container_name: demodb3
+    environment:
+      - POSTGRES_USER=root
+      - POSTGRES_PASSWORD=root
+      - POSTGRES_DB=demo
+    ports:
+      - "5434:5432"
+
+
+
+  service-discovery:
+    image: service-discovery
+    container_name: service-discovery
+    build:
+      context: ./serviceDiscovery/
+      dockerfile: Dockerfile
+    ports:
+      - "8761:8761"
+
+
+  api-gateway:
+    image: api-gateway
+    container_name: api-gateway
+    environment:
+      EUREKA_DEFAULT_ZONE: http://service-discovery:8761/eureka/
+    build:
+      context: ./api-gateway/
+      dockerfile:   Dockerfile
+    ports:
+      - "8000:8000"
+
+    depends_on:
+      - service-discovery
+
+
+
+  customer-service:
+    image: customer-service
+    container_name: customer-service
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://demodb/demo?autoReconnect=true
+      SPRING_DATASOURCE_USERNAME: "root"
+      SPRING_DATASOURCE_PASSWORD: "root"
+      EUREKA_DEFAULT_ZONE: http://service-discovery:8761/eureka/
+    build:
+      context: ./customerService/
+      dockerfile: Dockerfile_d
+    ports:
+      - "8001:8001"
+      - "8005:8005"
+
+    depends_on:
+      - service-discovery
+
+
+
+
+
+  zookeeper:
+    image: confluentinc/cp-zookeeper:latest
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    ports:
+      - "2181:2181"
+
+  kafka:
+    image: confluentinc/cp-kafka:latest
+    container_name: kafka
+    depends_on:
+      - zookeeper
+    ports:
+      - "9092:9092"
+
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,PLAINTEXT_HOST://localhost:29092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+
+
+  billing-service:
+    image: billing-service
+    container_name: billing-service
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://demodb2/demo?autoReconnect=true&useSSL=false
+      SPRING_DATASOURCE_USERNAME: "root"
+      SPRING_DATASOURCE_PASSWORD: "root"
+      EUREKA_DEFAULT_ZONE: http://service-discovery:8761/eureka/
+      KAFKA_SERVER: http://kafka:9092
+    build:
+      context: ./billingService/
+      dockerfile: Dockerfile_d
+    ports:
+      - "8002:8002"
+      - "8006:8006"
+
+    depends_on:
+      - kafka
+
+  billing-worker-service:
+    image: billing-worker-service
+    container_name:  billing-worker-service
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://demodb3/demo?autoReconnect=true&useSSL=false
+      SPRING_DATASOURCE_USERNAME: "root"
+      SPRING_DATASOURCE_PASSWORD: "root"
+      EUREKA_DEFAULT_ZONE: http://service-discovery:8761/eureka/
+      KAFKA_SERVER: http://kafka:9092
+    build:
+      context: ./billingworker-service/
+      dockerfile: Dockerfile_d
+    ports:
+      - "8004:8004"
+      - "8007:8007"
+
+    depends_on:
+      - kafka
+
+
+
+
+
+
+  # Networks to be created to facilitate communication between containers
