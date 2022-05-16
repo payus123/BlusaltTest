@@ -8,6 +8,7 @@ import com.example.billingservice.model.Billing;
 import com.example.billingservice.repository.BillingRepository;
 import com.example.billingservice.service.BillingService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 
@@ -17,6 +18,7 @@ import java.util.UUID;
 @Service
 @RequiredArgsConstructor
 @Transactional
+@Slf4j
 public class BillingServiceImpl implements BillingService {
     private final BillingRepository billingRepository;
     private final KafkaTemplate kafkaTemplate;
@@ -37,7 +39,7 @@ public class BillingServiceImpl implements BillingService {
                     .tranId(uuid.toString())
                     .status("PENDING").build();
 
-
+            log.info("Pushing message to kafka topic");
             kafkaTemplate.send("fundAccount", billingRequest);
             billingRepository.save(billing);
         } catch (Exception e) {
