@@ -15,3 +15,6 @@ password:root
 
 
 username:root
+
+
+See the DOCs.pdf in the root directory  to use the application 
