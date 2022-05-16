@@ -17,7 +17,7 @@ public class CustomerFundListeners {
    private final BillWorkerRepistory billWorkerRepistory;
 
     @KafkaListener(topics = "fundAccount",groupId = "groupId")
-    void listener(Billing data){
+    void dummyCharge(Billing data){
         try {
             TimeUnit.SECONDS.sleep(Double.valueOf(0.1).longValue());
         } catch (InterruptedException ie) {
